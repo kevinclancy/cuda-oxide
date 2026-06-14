@@ -92,6 +92,18 @@ export CARGO_HOME=/usr/local/cargo
 export PATH=/usr/local/cargo/bin:/usr/lib/llvm-21/bin:/usr/local/cuda/bin:$PATH
 EOF
 
+# /etc/profile.d only covers *login* shells. The VS Code Remote-SSH server
+# resolves its environment from ~/.bashrc, but Ubuntu's default ~/.bashrc
+# returns early for non-interactive shells — so rust-analyzer launched by the
+# server still couldn't find cargo/rustc (`No such file or directory`). Source
+# the env from the very top of root's ~/.bashrc, before any interactive guard,
+# so the server (and therefore rust-analyzer) inherits the toolchain on PATH no
+# matter which example folder is opened. This avoids needing a per-example
+# .vscode/settings.json across the 90+ standalone example crates.
+RUN touch /root/.bashrc \
+    && printf '%s\n' '. /etc/profile.d/cuda-oxide.sh' | cat - /root/.bashrc > /root/.bashrc.new \
+    && mv /root/.bashrc.new /root/.bashrc
+
 # Configure sshd so the container is reachable over direct TCP (required for VS
 # Code Remote-SSH; RunPod's web proxy exec's a shell in without sshd, but
 # Remote-SSH needs a real sshd listening on 22). openssh-server is installed

@@ -67,12 +67,26 @@ You do *not* use "Reopen in Container" on RunPod. Instead:
    cargo oxide run vecadd
    ```
 
-4. Install the same extensions you use in the dev container, on the remote:
+4. Install the same extensions you use in the dev container, **on the remote**
+   (Remote-SSH installs extensions per host — local installs do not carry over):
    `rust-lang.rust-analyzer`, `vadimcn.vscode-lldb`, `tamasfe.even-better-toml`.
 
 The environment variables the build sets (`CUDA_HOME`, `LIBCLANG_PATH`,
 `CUDA_OXIDE_LLC`, etc.) match the dev container, so the toolchain behaves the
-same way.
+same way. The image also sources these from `/root/.bashrc`, so the VS Code
+remote server — and therefore rust-analyzer — finds `cargo`/`rustc` on `PATH`
+even when you open an individual example folder. No per-folder
+`.vscode/settings.json` is needed.
+
+### IntelliSense on the examples
+
+Each example under `crates/rustc-codegen-cuda/examples/` is a **standalone Cargo
+crate** (its `Cargo.toml` declares an empty `[workspace]`), so it is *not* part
+of the main workspace. Open the example folder directly (e.g.
+`crates/rustc-codegen-cuda/examples/vecadd`) to get rust-analyzer on it, or add
+the example's `Cargo.toml` to `rust-analyzer.linkedProjects`. Device-side
+intrinsics may under-resolve because device code is compiled by the custom rustc
+codegen backend, which rust-analyzer's plain `cargo check` does not invoke.
 
 ## Keeping in sync with the dev container
 
